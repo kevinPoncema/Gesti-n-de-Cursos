@@ -4,6 +4,7 @@ from courses.models import User
 
 class AuthSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
+    role = serializers.CharField(required=False, default='student')
 
     class Meta:
         model = User

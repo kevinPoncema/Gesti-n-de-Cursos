@@ -8,4 +8,5 @@ urlpatterns = [
     
     # Registro personalizado
     path('api/auth/register/', courses_views.RegisterView.as_view(), name='auth_register'),
+    path('api/auth/register-student/', courses_views.RegisterStudentView.as_view(), name='auth_register_student'),
 ]
