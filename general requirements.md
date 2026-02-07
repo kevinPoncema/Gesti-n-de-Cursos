@@ -1,355 +1,269 @@
-# 📄 Requerimientos Generales
+# 📄 Requerimientos Funcionales
 
 ## API REST – Plataforma de Cursos Online
 
 ---
 
-## 1. Objetivo del Sistema
+## 1. Propósito del Sistema
 
-Desarrollar una **API REST** usando **Django + Django REST Framework** que permita gestionar una plataforma de cursos online.
+La API debe permitir **gestionar una plataforma de cursos online** y exponer toda su funcionalidad vía endpoints REST.
 
-El sistema debe servir como proyecto de aprendizaje avanzado y cubrir:
+El objetivo principal es:
 
-* Autenticación y autorización
-* Modelado de dominio complejo
-* Relaciones entre entidades
-* Consultas avanzadas con ORM
-* Arquitectura por capas (models / repositories / services)
+* Implementar reglas de negocio reales
+* Validar flujos completos de usuario
+* Forzar el uso de ORM avanzado y arquitectura por capas
 
 ---
 
-## 2. Alcance
+## 2. Comportamiento General de la API
 
-El sistema **NO incluye frontend**. Todo el acceso se realiza vía API REST.
+La API debe:
 
-El sistema debe permitir:
-
-* Gestión de usuarios con roles
-* Gestión de cursos y contenido educativo
-* Inscripciones y progreso
-* Reviews y ratings
-* Endpoints analíticos y estadísticos
+* Responder exclusivamente en JSON
+* Validar todas las entradas del cliente
+* Retornar códigos HTTP correctos
+* Proteger recursos según rol y propiedad
 
 ---
 
-## 3. Roles del Sistema
+## 3. Reglas de Autenticación y Autorización
 
-### 3.1 Roles disponibles
+### 3.1 Autenticación
 
-* **Admin**: acceso total
-* **Instructor**: crea y gestiona cursos propios
-* **Student**: se inscribe, progresa y comenta
+La API debe:
 
----
+* Permitir registro de usuarios
+* Permitir login mediante JWT
+* Requerir token válido para endpoints protegidos
 
-## 4. Entidades del Sistema
+Validaciones:
 
-### 4.1 User
-
-Entidad base de autenticación.
-
-Campos:
-
-* id
-* email (único)
-* username
-* password
-* role (admin | instructor | student)
-* is_active
-* created_at
+* Email único
+* Password mínimo de 8 caracteres
+* No permitir login de usuarios inactivos
 
 ---
 
-### 4.2 Instructor
+### 3.2 Autorización
 
-Extensión del usuario.
+La API debe restringir acciones según rol:
 
-Relación:
+* **Admin**:
 
-* OneToOne → User
+  * Acceso total a todos los recursos
 
-Campos:
+* **Instructor**:
 
-* bio
-* rating_promedio (calculado)
+  * Crear, editar y eliminar solo sus cursos
+  * Publicar cursos
+  * Consultar estadísticas propias
 
----
+* **Student**:
 
-### 4.3 Course
+  * Inscribirse en cursos publicados
+  * Ver su progreso
+  * Crear una sola review por curso
 
-Curso educativo.
+Validaciones:
 
-Relaciones:
-
-* ManyToOne → Instructor
-
-Campos:
-
-* id
-* titulo
-* descripcion
-* nivel (basico | intermedio | avanzado)
-* publicado (bool)
-* created_at
+* Un usuario no puede actuar sobre recursos que no le pertenecen
 
 ---
 
-### 4.4 Module
-
-Agrupa lecciones dentro de un curso.
-
-Relaciones:
-
-* ManyToOne → Course
-
-Campos:
-
-* id
-* titulo
-* orden
+## 4. Requerimientos Funcionales por Entidad
 
 ---
 
-### 4.5 Lesson
+### 4.1 Usuarios
 
-Contenido individual del curso.
+La API debe permitir:
 
-Relaciones:
+* Obtener información del usuario autenticado
+* Consultar usuarios (solo admin)
 
-* ManyToOne → Module
+Validaciones:
 
-Campos:
-
-* id
-* titulo
-* duracion_minutos
+* No exponer passwords
+* No permitir modificar el rol vía API pública
 
 ---
 
-### 4.6 Enrollment
+### 4.2 Cursos
 
-Relación entre usuario y curso.
+La API debe permitir:
 
-Relaciones:
+* Crear cursos (solo instructor)
+* Editar cursos propios
+* Eliminar cursos propios
+* Listar cursos publicados
+* Ver detalle de un curso
 
-* ManyToOne → User
-* ManyToOne → Course
+Validaciones:
 
-Campos:
-
-* id
-* progreso (0–100)
-* fecha_inscripcion
-
-Restricciones:
-
-* Un usuario solo puede inscribirse una vez por curso
+* Un curso no publicado no es visible a estudiantes
+* Solo el instructor propietario puede modificarlo
+* El nivel debe ser uno de: basico, intermedio, avanzado
 
 ---
 
-### 4.7 Review
+### 4.3 Publicación de Cursos
 
-Opinión del usuario sobre un curso.
+La API debe permitir:
 
-Relaciones:
+* Publicar un curso mediante acción explícita
 
-* ManyToOne → User
-* ManyToOne → Course
+Validaciones:
 
-Campos:
+* Un curso solo puede publicarse una vez
+* Solo el instructor propietario puede publicarlo
 
-* id
-* rating (1–5)
-* comentario
-* created_at
+---
 
-Restricciones:
+### 4.4 Módulos y Lecciones
 
+La API debe permitir:
+
+* Crear módulos dentro de un curso
+* Crear lecciones dentro de un módulo
+
+Validaciones:
+
+* Los módulos deben respetar un orden único por curso
+* Las lecciones deben tener duración positiva
+
+---
+
+### 4.5 Inscripciones
+
+La API debe permitir:
+
+* Inscribirse en un curso
+* Consultar cursos inscritos del usuario
+
+Validaciones:
+
+* Un usuario no puede inscribirse dos veces al mismo curso
+* Solo estudiantes pueden inscribirse
+* Solo cursos publicados aceptan inscripciones
+
+---
+
+### 4.6 Progreso
+
+La API debe:
+
+* Calcular progreso automáticamente
+* Retornar progreso como porcentaje
+
+Validaciones:
+
+* El progreso debe estar entre 0 y 100
+
+---
+
+### 4.7 Reviews
+
+La API debe permitir:
+
+* Crear una review por curso
+* Listar reviews de un curso
+
+Validaciones:
+
+* Rating entre 1 y 5
 * Un usuario solo puede dejar una review por curso
+* Solo usuarios inscritos pueden dejar reviews
 
 ---
 
-## 5. Autenticación y Seguridad
+## 5. Endpoints Funcionales Obligatorios
 
-### 5.1 Autenticación
-
-* JWT (access + refresh)
-* Registro y login vía API
-
-### 5.2 Autorización
-
-* Permisos por rol
-* Permisos por objeto (propietario del recurso)
-
----
-
-## 6. Endpoints del API
-
-### 6.1 Autenticación
+### Autenticación
 
 ```
-POST   /api/auth/register/
-POST   /api/auth/login/
-POST   /api/auth/refresh/
+POST /api/auth/register/
+POST /api/auth/login/
+POST /api/auth/refresh/
 ```
 
----
-
-### 6.2 Usuarios
+### Cursos
 
 ```
-GET    /api/users/me/
-GET    /api/users/{id}/        (admin)
+GET  /api/courses/
+GET  /api/courses/{id}/
+POST /api/courses/
+PUT  /api/courses/{id}/
 ```
 
----
-
-### 6.3 Cursos
+### Acciones
 
 ```
-GET    /api/courses/
-GET    /api/courses/{id}/
-POST   /api/courses/           (instructor)
-PUT    /api/courses/{id}/      (owner)
-DELETE /api/courses/{id}/      (owner)
+POST /api/courses/{id}/publish/
+POST /api/courses/{id}/enroll/
+```
+
+### Reviews
+
+```
+POST /api/courses/{id}/reviews/
+GET  /api/courses/{id}/reviews/
 ```
 
 ---
 
-### 6.4 Acciones sobre cursos
+## 6. Requerimientos de Consultas Avanzadas
 
-```
-POST   /api/courses/{id}/publish/
-POST   /api/courses/{id}/enroll/
-```
+La API debe exponer endpoints que:
 
----
+* Calculen estadísticas agregadas
+* Utilicen joins entre múltiples entidades
 
-### 6.5 Inscripciones
+### Consultas requeridas:
 
-```
-GET    /api/enrollments/my/
-```
+* Cursos más populares
+* Ranking de instructores
+* Progreso del usuario
 
 ---
 
-### 6.6 Reviews
+## 7. Reglas Técnicas Obligatorias
 
-```
-POST   /api/courses/{id}/reviews/
-GET    /api/courses/{id}/reviews/
-```
+El sistema debe:
 
----
-
-### 6.7 Estadísticas y consultas complejas
-
-#### Cursos populares
-
-```
-GET /api/stats/courses/popular/
-```
-
-Devuelve:
-
-* total_inscritos
-* rating_promedio
-* total_reviews
+* Usar Django ORM sin SQL crudo
+* Encapsular queries complejas en repositories
+* Encapsular lógica de negocio en services
+* Mantener views delgadas
 
 ---
 
-#### Ranking de instructores
+## 8. Datos de Prueba
 
-```
-GET /api/stats/instructors/top/
-```
-
-Devuelve:
-
-* total_cursos
-* total_alumnos
-* rating_promedio
-
----
-
-#### Progreso del usuario
-
-```
-GET /api/stats/my-progress/
-```
-
-Devuelve:
-
-* cursos inscritos
-* lecciones totales
-* progreso
-
----
-
-## 7. Consultas ORM Requeridas
-
-El sistema debe incluir consultas con:
-
-* annotate
-* aggregate
-* Count / Avg
-* Subquery
-* OuterRef
-* F expressions
-* Q objects
-
----
-
-## 8. Datos de Prueba (Seed)
-
-Debe existir un comando de carga de datos:
+Debe existir un comando:
 
 ```
 python manage.py seed_data
 ```
 
-Mínimos requeridos:
+Debe generar:
 
-* 1,000 usuarios
-* 20 instructores
-* 100 cursos
-* 10,000 lecciones
-* 5,000 inscripciones
-* 8,000 reviews
+* Usuarios con distintos roles
+* Cursos con módulos y lecciones
+* Inscripciones cruzadas
+* Reviews coherentes
 
 ---
 
-## 9. Requisitos Técnicos
+## 9. Criterios de Cumplimiento
 
-* Python 3.11+
-* Django
-* Django REST Framework
-* JWT Auth
-* PostgreSQL (recomendado)
-* Arquitectura por capas
+El sistema cumple si:
 
----
-
-## 10. Criterios de Éxito
-
-El proyecto se considera exitoso si:
-
-* La API funciona correctamente
-* Los permisos se respetan
-* Las queries están optimizadas
-* El código está organizado por capas
-* Existen datos de prueba realistas
+* Todas las validaciones se aplican
+* Los permisos funcionan correctamente
+* Los endpoints devuelven datos consistentes
+* Las consultas son eficientes
 
 ---
 
-## 11. Extensiones Futuras (Opcional)
-
-* Cache
-* Rate limiting
-* Versionado de API
-* Tests automatizados
-* Documentación OpenAPI
-
----
-
-📌 **Este documento define el contrato funcional del sistema.**
+📌 **Este documento define QUÉ debe hacer la API y QUÉ reglas debe cumplir.**
