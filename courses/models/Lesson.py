@@ -10,6 +10,5 @@ class Lesson(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     class Meta:
         app_label = 'courses'
-        ordering = ['order']
     def __str__(self):
         return f"{self.module.course.title} - {self.module.title} - {self.title}"

@@ -10,6 +10,5 @@ class Module(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     class Meta:
         app_label = 'courses'
-        ordering = ['order']
     def __str__(self):
         return f"{self.course.title} - {self.title}"
