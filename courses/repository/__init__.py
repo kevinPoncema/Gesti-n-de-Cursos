@@ -1,1 +1,2 @@
 from .UserRepository import UserRepository
+from .CourceRepository import CourseRepository
