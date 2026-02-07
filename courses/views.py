@@ -3,17 +3,24 @@ from rest_framework.response import Response
 from rest_framework import status
 from courses.serializers import AuthSerializer
 from courses.services import AuthService
+from courses.repository import UserRepository
 
 class RegisterView(APIView):
     def post(self, request):
-        serializer = AuthSerializer.AuthSerializer(data=request.data)
+        serializer = AuthSerializer(data=request.data)
         if serializer.is_valid():
-            auth_service = AuthService()
+            user_repository = UserRepository()
+            auth_service = AuthService(user_repository)
             try:
-                user = list(auth_service.register_user(serializer.validated_data, request).values())
-                return Response({"message": "Usuario registrado exitosamente"}, 
-                                status=status.HTTP_201_CREATED
-                                ,user=user)
+                user = auth_service.register_user(serializer.validated_data, request)
+                return Response({
+                    "message": "Usuario registrado exitosamente",
+                    "user": {
+                        "username": user.username,
+                        "email": user.email,
+                        "role": user.role
+                    }
+                }, status=status.HTTP_201_CREATED)
             except PermissionError as e:
                 return Response({"error": str(e)}, status=status.HTTP_403_FORBIDDEN)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
