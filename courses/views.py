@@ -1,12 +1,12 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from courses.serializers import RegisterSerializer
+from courses.serializers import AuthSerializer
 from courses.services import AuthService
 
 class RegisterView(APIView):
     def post(self, request):
-        serializer = RegisterSerializer(data=request.data)
+        serializer = AuthSerializer.AuthSerializer(data=request.data)
         if serializer.is_valid():
             auth_service = AuthService()
             try:
